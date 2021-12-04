@@ -19,7 +19,13 @@ function to_matrix(input)
     return A
 end
 
-bin2int(v) = dot(Iterators.reverse((2^(i-1) for i in 1:length(v))), v)
+# bin2int(v) = dot(Iterators.reverse((2^(i-1) for i in 1:length(v))), v)
+struct Dim{N} end
+bin2int(v) = bin2int(v,Dim{length(v)}())
+@generated function bin2int(v, ::Dim{N}) where {N}
+    w = reverse([2^(i-1) for i in 1:N])
+    :(dot($w,v))
+end
 
 function part_1(input)
     A = to_matrix(input)
