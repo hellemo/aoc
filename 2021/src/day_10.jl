@@ -30,13 +30,13 @@ struct MatchScore{N} end
         op[codepoint(closes[i])] = false
     end
     if M == Open
-        return :($op[codepoint(c)])
+        return :(@inbounds $op[codepoint(c)])
     elseif M == Score1
-        return :($score1[codepoint(c)])
+        return :(@inbounds $score1[codepoint(c)])
     elseif M == Score2
-        return :($score2[codepoint(c)])
+        return :(@inbounds $score2[codepoint(c)])
     else
-        return :($mat[codepoint(c)])
+        return :(@inbounds $mat[codepoint(c)])
     end
 end
 
@@ -54,7 +54,7 @@ function fast_1(input)
         for c in l
             if is_open(c)
                 push!(parens, c)
-            elseif !is_open(c)
+            else
                 co = pop!(parens)
                 if !(co == find_match(c))
                     sumscores += score_1(c)
@@ -83,7 +83,7 @@ function fast_2(input)
         for c in l
             if is_open(c)
                 push!(parens,c)
-            elseif !is_open(c)
+            else
                 co = pop!(parens)
                 if !(co == find_match(c))
                     deleteat!(parens, 1:length(parens))
