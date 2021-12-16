@@ -96,13 +96,8 @@ decode(x::Number) = x
 function decode(ps::Tuple)
     ps[2] == 4 && return ps[3]
     ptype = ps[2] + 1
-    fs = [sum, prod, minimum, maximum, identity,
-          x->Int(x[1]>x[2]),
-          x->Int(x[1]<x[2]),
-          x->Int(x[1]==x[2]),
-    ]
-    f = fs[ptype]
-    return f(decode(ps[5]))
+    fs = [+, *, min, max, identity, >, <, ==]
+    return fs[ptype](decode(ps[5])...)
 end
 function decode(ps::Vector)
     length(ps) == 1 && return decode(ps[1])
