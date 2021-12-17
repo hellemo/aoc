@@ -3,28 +3,24 @@ using AdventOfCode
 using Test
 
 input = readlines("2021/data/day_16.txt")[1]
-testinput = "D2FE28"
 
-const D = Dict(
-        '0' => "0000",
-        '1' => "0001",
-        '2' => "0010",
-        '3' => "0011",
-        '4' => "0100",
-        '5' => "0101",
-        '6' => "0110",
-        '7' => "0111",
-        '8' => "1000",
-        '9' => "1001",
-        'A' => "1010",
-        'B' => "1011",
-        'C' => "1100",
-        'D' => "1101",
-        'E' => "1110",
-        'F' => "1111",
-    )
-
+const D = let
+    Dict(zip((c for c in vcat('0':'9','A':'F')),
+             (bitstring(i)[end-3:end] for i = 0:15)))
+end
 hex2bin(input) = join(D[c] for c in chomp(input))
+
+abstract type Packet end
+struct Literal <: Packet 
+    V::Int
+    T::Int
+    value::Int
+end
+struct Operator <: Packet
+    V::Int
+    T::Int
+    value::Vector
+end
 
 function parse_packets(bits, N)
     toparse = bits
@@ -73,17 +69,17 @@ function parse_packets(bits)
             push!(SUBPACKETS, ps)
         end
     end
-    return V,T,L,LEN,SUBPACKETS, rest
+    if T == 4
+        return (Literal(V, T, L), rest)
+    else
+        return (Operator(V, T, SUBPACKETS), rest)
+    end
 end
 
-function sumversions(ps::Tuple)
-    return ps[1] + sumversions(ps[5])
-end
-function sumversions(ps::Vector)
-    isempty(ps) && return 0
-    s = [sumversions(i) for i in ps]
-    return sum(s)
-end
+sumversions(ps::Tuple) = sumversions(first(ps))
+sumversions(ps::Packet) = ps.V + sumversions(ps.value)
+sumversions(::Number) = 0
+sumversions(ps::Vector) = sum(sumversions(i) for i in vcat([0],ps))
 
 function part_1(input)
     BITS = hex2bin(input)
@@ -92,15 +88,13 @@ function part_1(input)
 end
 @info part_1(input)
 
+const OPS = [+, *, min, max, identity, >, <, ==]
 decode(x::Number) = x
-function decode(ps::Tuple)
-    ps[2] == 4 && return ps[3]
-    ptype = ps[2] + 1
-    fs = [+, *, min, max, identity, >, <, ==]
-    return fs[ptype](decode(ps[5])...)
-end
+decode(lit::Literal) = lit.value
+decode(ps::Tuple) = decode(first(ps))
+decode(op::Operator) = OPS[op.T+1](decode(op.value)...)
 function decode(ps::Vector)
-    length(ps) == 1 && return decode(ps[1])
+    length(ps) == 1 && return decode(first(ps))
     [decode(i) for i in ps]
 end
 
