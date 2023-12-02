@@ -6,10 +6,13 @@ input = "2023/data/day_01.txt"
 testinput = "2023/data/test_01.txt"
 testinput2 = "2023/data/test_01_2.txt"
 
-function parse_data(input)
-    for l in eachline(input)
-        @info l
+using Base.Threads: nthreads, @spawn
+function tmapreduce(f, op, itr; tasks_per_thread::Int = 2, kwargs...)
+    chunk_size = max(1, length(itr) ÷ (tasks_per_thread * nthreads()))
+    tasks = map(Iterators.partition(itr, chunk_size)) do chunk
+        @spawn mapreduce(f, op, chunk; kwargs...)
     end
+    mapreduce(fetch, op, tasks; kwargs...)
 end
 
 function first_digit(l)
@@ -19,8 +22,12 @@ function first_digit(l)
 end
 last_digit(l) = first_digit(reverse(l))
 
+function num(l)
+    first_digit(l) * 10 + last_digit(l)
+end
+
 function part_1(input)
-    sum(first_digit(l) * 10 + last_digit(l) for l in eachline(input))
+    tmapreduce(num, +, collect(eachline(input)))
 end
 
 @test part_1(testinput) == 142
@@ -56,7 +63,6 @@ function first_digit(l, D)
 end
 last_digit(l, revD) = first_digit(reverse(l), revD)
 
-
 function digit(l, pos, D)
     # If number, terminate early
     isnumeric(l[pos]) && return codepoint(l[pos]) - 48
@@ -74,8 +80,10 @@ function digit(l, pos, D)
     end
 end
 
+number(l, D, revD) = first_digit(l, D) * 10 + last_digit(l, revD)
+
 function part_2(input)
-    sum(first_digit(l, D) * 10 + last_digit(l, revD) for l in eachline(input))
+    tmapreduce(l -> number(l, D, revD), +, collect(eachline(input)))
 end
 
 @test part_2(testinput2) == 281

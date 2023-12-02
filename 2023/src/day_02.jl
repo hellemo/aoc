@@ -5,15 +5,27 @@ using Test
 input = "2023/data/day_02.txt"
 testinput = "2023/data/test_02.txt"
 
-function parse_data(input)
-    gs = []
-    for (i, l) in enumerate(eachline(input))
-        game_num, games = split(l, ":")
-        games = split(games, ";")
-        push!(gs, [parse_game(g) for g in games])
+using Base.Threads: nthreads, @spawn
+function tmapreduce(f, op, itr; tasks_per_thread::Int = 2, kwargs...)
+    chunk_size = max(1, length(itr) ÷ (tasks_per_thread * nthreads()))
+    tasks = map(Iterators.partition(itr, chunk_size)) do chunk
+        @spawn mapreduce(f, op, chunk; kwargs...)
     end
-    return gs
+    mapreduce(fetch, op, tasks; kwargs...)
 end
+
+function parse_line(p)
+    i = first(p)
+    l = last(p)
+    game_num, games = split(l, ":")
+    games = split(games, ";")
+    all(isvalid.(parse_game.(games))) && return i
+end
+
+function part_1(input)
+    tmapreduce(parse_line, +, collect(enumerate(eachline(input))))
+end
+
 
 function parse_game(g)
     rawcubes = split(g, ",")
@@ -32,17 +44,6 @@ end
 function parse_draw(d)
     tmp = split(d)
     return (color = last(tmp), number = parse(Int, replace(first(tmp), " " => "")))
-end
-
-function part_1(input)
-    games = parse_data(input)
-    score = 0
-    for (i, g) in enumerate(games)
-        if sum(isvalid.(g)) == length(g)
-            score = score + i
-        end
-    end
-    return score
 end
 
 @test part_1(testinput) == 8
@@ -67,9 +68,14 @@ function power(games)
     return max_red * max_green * max_blue
 end
 
+function parse_line2(l)
+    game_num, games = split(l, ":")
+    games = split(games, ";")
+    power(parse_game.(games))
+end
+
 function part_2(input)
-    games = parse_data(input)
-    return sum(power(g) for g in games)
+    tmapreduce(parse_line2, +, collect(eachline(input)))
 end
 
 @test part_2(testinput) == 2286
