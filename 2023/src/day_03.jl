@@ -1,6 +1,7 @@
 # https://adventofcode.com/2023/day/3
 using AdventOfCode
 using Test
+using Base.Threads: @spawn
 
 input = "2023/data/day_03.txt"
 testinput = "2023/data/test_03.txt"
@@ -19,7 +20,6 @@ function legal_moves(A, p::CartesianIndex)
 end
 
 function validpn(A, candidate)
-    symbol = '.'
     for i in candidate
         for n in legal_moves(A, i)
             if A[n] != '.' && !(n in candidate) && !isnumeric(A[n])
@@ -38,13 +38,13 @@ function add_to_gear(dict, ci, cis)
     end
 end
 
-function solve(A)
+function solve(A, CI)
     ispn = false
     candidates = Vector{CartesianIndex}[] # arrays of CIs
     candidate = CartesianIndex[] #CIs
     gears = Dict{CartesianIndex,Vector{Vector{CartesianIndex}}}()
     count = 0
-    for i in CartesianIndices(A)
+    for i in CI
         if !ispn && isnumeric(A[i]) # New candidata
             ispn = true
             push!(candidate, i)
@@ -79,7 +79,7 @@ end
 
 function part_1(input)
     A = parse_data(input)
-    candidates, _ = solve(A)
+    candidates, _ = solve(A, CartesianIndices(A))
     sum(pn(A, x) for x in candidates)
 end
 
@@ -99,7 +99,7 @@ end
 
 function part_2(input)
     A = parse_data(input)
-    _, gears = solve(A)
+    _, gears = solve(A, CartesianIndices(A))
     return gearprods(A, gears)
 end
 
@@ -107,9 +107,16 @@ end
 @test part_2(input) == 76504829
 @info "Part2:" part_2(input)
 
-function both_parts(input)
+function both_parts(input, N = 10)
     A = parse_data(input)
-    candidates, gears = solve(A)
+    # Split and solve by slices:
+    wsl = collect(Iterators.partition(1:size(A, 1), N))
+    slices = [CartesianIndices((size(A, 1), j)) for j in wsl]
+    sresults = fetch.([@spawn solve(A, s) for s in slices])
+    # Merge results
+    candidates = vcat(first.(sresults)...)
+    gears = mergewith(vcat)(last.(sresults)...)
+    # Calculate sums
     p1 = sum(pn(A, x) for x in candidates)
     p2 = gearprods(A, gears)
     return p1, p2
