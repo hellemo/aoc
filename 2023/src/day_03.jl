@@ -87,10 +87,7 @@ end
 @test part_1(input) == 525119
 @info "Part1:" part_1(input)
 
-function part_2(input)
-    A = parse_data(input)
-    _, gears = solve(A)
-
+function gearprods(A, gears)
     sumgears = 0
     for g in values(gears)
         if length(g) == 2
@@ -100,6 +97,22 @@ function part_2(input)
     return sumgears
 end
 
+function part_2(input)
+    A = parse_data(input)
+    _, gears = solve(A)
+    return gearprods(A, gears)
+end
+
 @test part_2(testinput) == 467835
 @test part_2(input) == 76504829
 @info "Part2:" part_2(input)
+
+function both_parts(input)
+    A = parse_data(input)
+    candidates, gears = solve(A)
+    p1 = sum(pn(A, x) for x in candidates)
+    p2 = gearprods(A, gears)
+    return p1, p2
+end
+@test both_parts(testinput) == (4361, 467835)
+@test both_parts(input) == (525119, 76504829)
