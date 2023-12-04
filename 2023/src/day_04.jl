@@ -1,15 +1,10 @@
 # https://adventofcode.com/2023/day/4
 using AdventOfCode
 using Test
+using Base.Threads: @spawn
 
 input = "2023/data/day_04.txt"
 testinput = "2023/data/test_04.txt"
-
-function parse_data(input)
-    for l in eachline(input)
-        @info l
-    end
-end
 
 function parse_line(l)
     _, nums = split(l, ":")
@@ -54,3 +49,21 @@ end
 @test part_2(testinput) == 30
 @test part_2(input) == 13261850
 @info "Part2:" part_2(input)
+
+function solve(matches::Vector{Int})
+    cards = ones(Int, length(matches))
+    for card = 1:length(cards)
+        cards[card+1:card+matches[card]] .+= cards[card]
+    end
+    return sum(cards)
+end
+
+function both_parts(input, N = 13)
+    n_lines = Iterators.partition(enumerate(eachline(input)), N)
+    res = fetch.(@spawn map.(x->first(x)=>matches_line(last(x)),[x]) for x in n_lines)
+    matches = last.(only(sort(vcat.(res...); by = x -> first(x))))
+    return sum(x > 0 ? 2^(x - 1) : 0 for x in matches), solve(matches)
+end
+
+@test both_parts(testinput) == (13, 30)
+@test both_parts(input) == (23750, 13261850)
