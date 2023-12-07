@@ -6,8 +6,13 @@ using Test
 input = "2023/data/day_08.txt"
 testinput = "2023/data/test_08.txt"
 
-function parse_data(input)
+function parse_data(input, N = 64)
     instructions, rest = Iterators.peel(eachline(input))
+    return instructions,
+    merge(fetch.(@spawn parse_lines(r) for r in Iterators.partition(rest, N))...)
+end
+
+function parse_lines(rest)
     d = Dict{String,@NamedTuple{L::SubString{String}, R::SubString{String}}}()
     for l in rest
         if length(l) > 0
@@ -15,7 +20,7 @@ function parse_data(input)
             d[A] = (; L, R)
         end
     end
-    return instructions, d
+    return d
 end
 
 function parse_line(l)
@@ -50,7 +55,7 @@ end
 
 function part_2(input)
     i, d = parse_data(input)
-    return lcm(fetch.(@spawn solve(i,d,l,"Z") for l in filter(endswith("A"), keys(d))))
+    return lcm(fetch.(@spawn solve(i, d, l, "Z") for l in filter(endswith("A"), keys(d))))
 end
 
 @test part_2(input) == 21003205388413
