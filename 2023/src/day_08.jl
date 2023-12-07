@@ -50,15 +50,7 @@ end
 
 function part_2(input)
     i, d = parse_data(input)
-    locations = [string(l) for l in filter(endswith("A"), keys(d))]
-    steps = fetch.(@spawn solve(i,d,l,"Z") for l in locations)
-    f = [gcd(steps[1], steps[i]) for i = 2:length(steps)]
-    f1 = 1
-    if allequal(f)
-        steps ./= first(f)
-        f1 = first(f)
-    end
-    return prod(steps) * f1
+    return lcm(fetch.(@spawn solve(i,d,l,"Z") for l in filter(endswith("A"), keys(d))))
 end
 
 @test part_2(input) == 21003205388413
