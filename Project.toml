@@ -2,3 +2,5 @@
 AdventOfCode = "7ef4cfdd-3fec-4d8b-b242-bcc5161d01d5"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
