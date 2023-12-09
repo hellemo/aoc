@@ -30,8 +30,8 @@ function next_value(ns)
     return placeholder + last(ns)
 end
 
-function part_1_serial(input)
-    sum(next_line.(eachline(input)))
+function part_1_serial(input, solve = next_line)
+    sum(solve.(eachline(input)))
 end
 
 function part_1(input, solve = next_line, N = 2)
